@@ -37,7 +37,7 @@ func (m *MockTenantRepository) ArchivePayments(tenants []entity.Tenant) error {
 	return args.Error(0)
 }
 
-func TestRun_ShouldNotifyTenant(t *testing.T) {
+func TestRun_NotifyTenants(t *testing.T) {
 	mockRepo := new(MockTenantRepository)
 	mockSender := new(MockMessageSender)
 	r := usecase.NewRunner(mockSender, mockRepo)
@@ -77,4 +77,42 @@ func TestRun_ShouldNotifyTenant(t *testing.T) {
 			mockRepo.AssertExpectations(t)
 		})
 	}
+}
+
+func Test_ResetAndArchivePayments(t *testing.T) {
+	today := time.Now().Truncate(24 * time.Hour)
+	pastDue := today.AddDate(0, 0, -1).Format("2006-01-02")
+	futureDue := today.AddDate(0, 0, 3).Format("2006-01-02")
+
+	tenants := []entity.Tenant{
+		// Should archive and reset
+		{ID: "1", DueDate: pastDue, PaymentConfirmed: today.Format("2006-01-02")},
+		// Should not archive (future due date)
+		{ID: "2", DueDate: futureDue, PaymentConfirmed: today.Format("2006-01-02")},
+		// Should not archive (past due but not confirmed)
+		{ID: "3", DueDate: pastDue, PaymentConfirmed: ""},
+		// Should archive and reset (another past due and confirmed case)
+		{ID: "4", DueDate: pastDue, PaymentConfirmed: today.AddDate(0, 0, -2).Format("2006-01-02")},
+	}
+
+	toArchive := []entity.Tenant{
+		tenants[0], tenants[3],
+	}
+
+	toUpdate := []entity.Tenant{
+		{ID: "1", DueDate: pastDue, PaymentConfirmed: "", ClaimedHavePaid: ""},
+		{ID: "4", DueDate: pastDue, PaymentConfirmed: "", ClaimedHavePaid: ""},
+	}
+
+	repo := new(MockTenantRepository)
+	repo.On("GetAllTenants").Return(tenants, nil)
+	repo.On("ArchivePayments", toArchive).Return(nil)
+	repo.On("UpdateTenants", toUpdate).Return(nil)
+
+	r := usecase.NewRunner(nil, repo)
+
+	r.Run()
+
+	repo.AssertCalled(t, "ArchivePayments", toArchive)
+	repo.AssertCalled(t, "UpdateTenants", toUpdate)
 }

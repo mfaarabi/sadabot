@@ -29,6 +29,11 @@ func NewRunner(messageSender MessageSender, tenantRepository TenantRepository) *
 
 func (r *Runner) Run() {
 	tenants, _ := r.tenantRepository.GetAllTenants()
+	r.notifyTenants(tenants)
+	r.resetAndArchivePayments(tenants)
+}
+
+func (r *Runner) notifyTenants(tenants []entity.Tenant) {
 	for _, tenant := range tenants {
 		if r.shouldNotifyTenant(tenant) {
 			r.messageSender.Send(tenant)
@@ -53,4 +58,31 @@ func (r *Runner) shouldNotifyTenant(tenant entity.Tenant) bool {
 	// Notify on day-7, day-3, and day-1 before due date
 	daysUntilDue := int(due.Sub(today).Hours() / 24)
 	return daysUntilDue == 7 || daysUntilDue == 3 || daysUntilDue == 1
+}
+
+func (r *Runner) resetAndArchivePayments(tenants []entity.Tenant) {
+	var toArchive []entity.Tenant
+	var toUpdate []entity.Tenant
+	today := time.Now().Truncate(24 * time.Hour)
+
+	for _, tenant := range tenants {
+		due, _ := time.Parse("2006-01-02", tenant.DueDate)
+
+		// Archive only if today is past due date and payment is confirmed
+		if today.After(due) && tenant.PaymentConfirmed != "" {
+			toArchive = append(toArchive, tenant)
+
+			// Reset fields
+			tenant.ClaimedHavePaid = ""
+			tenant.PaymentConfirmed = ""
+			toUpdate = append(toUpdate, tenant)
+		}
+	}
+
+	if len(toArchive) > 0 {
+		r.tenantRepository.ArchivePayments(toArchive)
+	}
+	if len(toUpdate) > 0 {
+		r.tenantRepository.UpdateTenants(toUpdate)
+	}
 }
