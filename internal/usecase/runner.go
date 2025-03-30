@@ -1,18 +1,18 @@
 package usecase
 
 import (
-	"fmt"
-	"log"
 	"sadabot/internal/entity"
 	"time"
 )
 
 type MessageSender interface {
-	Send(message, number string)
+	Send(entity.Tenant)
 }
 
 type TenantRepository interface {
-	GetAllTenants() []entity.Tenant
+	GetAllTenants() ([]entity.Tenant, error)
+	UpdateTenants([]entity.Tenant) error
+	ArchivePayments([]entity.Tenant) error
 }
 
 type Runner struct {
@@ -28,36 +28,29 @@ func NewRunner(messageSender MessageSender, tenantRepository TenantRepository) *
 }
 
 func (r *Runner) Run() {
-	tenants := r.tenantRepository.GetAllTenants()
-
+	tenants, _ := r.tenantRepository.GetAllTenants()
 	for _, tenant := range tenants {
-		expirationDate, err := time.Parse("2006-01-02", tenant.RentalExpirationDate)
-
-		if err != nil {
-			log.Printf("Error parsing date for %s: %v", tenant.Name, err)
-			continue
-		}
-
-		if isNotificationDate(expirationDate) {
-			message := fmt.Sprintf(
-				"Hi %s,\n\n"+
-					"This is a reminder that your rental for Room %d "+
-					"is expiring on %s. "+
-					"Please ensure you take necessary actions.\n\n"+
-					"Thank you!",
-				tenant.Name,
-				tenant.Room,
-				tenant.RentalExpirationDate,
-			)
-
-			r.messageSender.Send(message, tenant.Phone)
+		if r.shouldNotifyTenant(tenant) {
+			r.messageSender.Send(tenant)
 		}
 	}
 }
 
-func isNotificationDate(expirationDate time.Time) bool {
+func (r *Runner) shouldNotifyTenant(tenant entity.Tenant) bool {
 	today := time.Now().Truncate(24 * time.Hour)
-	daysRemaining := int(expirationDate.Sub(today).Hours() / 24)
+	due, _ := time.Parse("2006-01-02", tenant.DueDate)
 
-	return daysRemaining == 7 || daysRemaining == 3 || daysRemaining == 1
+	// Stop notifying if due date has passed or payment is confirmed
+	if today.After(due) || tenant.PaymentConfirmed != "" {
+		return false
+	}
+
+	// Stop notifying if tenant claimed they paid
+	if tenant.ClaimedHavePaid != "" {
+		return false
+	}
+
+	// Notify on day-7, day-3, and day-1 before due date
+	daysUntilDue := int(due.Sub(today).Hours() / 24)
+	return daysUntilDue == 7 || daysUntilDue == 3 || daysUntilDue == 1
 }
