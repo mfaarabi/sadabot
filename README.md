@@ -1,5 +1,7 @@
 # Kost Rapi
 
+Product documentation: [detailed requirements](docs/requirements.md).
+
 Browser-local prototype for managing a family kost. Bahasa Indonesia, IDR, responsive layout. Includes rooms and tenants, calendar-month rent tracking, an H−3 reminder queue, editable WhatsApp templates, receipt attachment and manual payment verification, and JSON export.
 
 Run `python3 -m http.server 5173 --directory dist`, then open http://localhost:5173.
