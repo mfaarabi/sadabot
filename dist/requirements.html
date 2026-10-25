@@ -1,0 +1,298 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Detailed requirements — Kost Rapi</title><link rel="stylesheet" href="document.css"></head><body><header><a href="index.html">⌂ kostrapi <span>/ Detailed requirements</span></a><a href="app.html">Open prototype ↗</a></header><main><div class="document-nav"><a href="index.html">← Project overview</a><a href="brief.html">Read the short brief ↗</a></div><article><h1>Kost Rapi — Product Requirements</h1>
+<p>For a quick overview, start with the <a href="brief.html">product brief</a>. This document expands it into scope, user stories, acceptance criteria, and decisions to validate.</p>
+<p>Status: Draft for family review<br>Last updated: 2026-10-25<br>Primary user: The family member managing the kost<br>Delivery approach: Small web prototype, tested and refined with the primary user</p>
+<h2>1. Problem</h2>
+<p>The family manages a kost and needs to remember when each tenant&#x27;s rent is due, contact the tenant, and track whether rent has been paid. Relying on memory and chat history makes it easy to miss a reminder or lose track of payment status.</p>
+<p>The product should make it clear who needs attention, prepare the correct reminder for that tenant, and record payment after a transfer receipt is received and reviewed.</p>
+<h2>2. Desired outcomes</h2>
+<ul>
+<li>The manager can see which rent payments are due soon, due today, or overdue.</li>
+<li>The manager does not need to remember to open the website every day to discover reminders.</li>
+<li>Each reminder contains the correct recipient, room, billing period, amount, and due date.</li>
+<li>The manager spends less time composing and sending repetitive messages.</li>
+<li>The manager can distinguish an unpaid bill, a received receipt, and a confirmed payment.</li>
+<li>The family can refine the workflow through short prototype and feedback cycles.</li>
+</ul>
+<h2>3. Confirmed needs and proposed defaults</h2>
+<h3>Confirmed by the user</h3>
+<ul>
+<li>A simple website is the starting point.</li>
+<li>The product needs tenant, room, and due-date management.</li>
+<li>Rent reminders should ideally be sent to tenants automatically through WhatsApp.</li>
+<li>If direct WhatsApp integration is difficult, the product should at least send the manager the prepared message and recipient so she can send it herself.</li>
+<li>The product needs a way to mark payments as done after receiving a transfer receipt.</li>
+<li>Prototyping and frequent feedback are central to development.</li>
+</ul>
+<h3>Proposed defaults — subject to validation</h3>
+<ul>
+<li>Interface language: Bahasa Indonesia; currency: Indonesian rupiah.</li>
+<li>Rent is billed monthly, with a recurring due day per tenancy.</li>
+<li>Reminder timing starts three days before the due date.</li>
+<li>Only the manager uses the initial product; tenants continue using WhatsApp.</li>
+<li>The manager verifies that funds arrived before marking a payment paid.</li>
+<li>The first operational release supports one kost and full monthly payments.</li>
+</ul>
+<p>These defaults are working assumptions, not requirements already approved by the family.</p>
+<h2>4. Scope and release stages</h2>
+<div class="table-scroll"><table><thead><tr><th>Stage</th><th>Purpose</th><th>Included</th><th>Completion condition</th></tr></thead><tbody>
+<tr><td>Interactive prototype</td><td>Validate the workflow</td><td>Sample tenants and rooms; due dates; reminder queue; editable messages; WhatsApp handoff; receipt attachment; manual payment confirmation</td><td>The manager can walk through the main tasks and give specific feedback</td></tr>
+<tr><td>Operational MVP</td><td>Solve the remembering problem reliably</td><td>Durable shared data; protected manager access; scheduled reminders; delivery to the manager through an agreed channel; recipient and message handoff; payment records and receipts</td><td>A due reminder reaches the manager while the site is closed, and payment state reliably suppresses unnecessary reminders</td></tr>
+<tr><td>WhatsApp automation</td><td>Reduce manual sending further</td><td>Direct scheduled tenant delivery, if the supported integration is practical; delivery status and failure recovery</td><td>A reminder reaches the intended tenant once, with observable success or failure</td></tr>
+</tbody></table></div>
+<p>Direct WhatsApp automation is the preferred outcome. Reliable delivery of a prepared reminder to the manager is an acceptable MVP fallback. The prototype&#x27;s on-screen queue alone does not satisfy the remembering requirement.</p>
+<h2>5. Main workflow</h2>
+<ol>
+<li>The manager creates a room with its rent amount.</li>
+<li>The manager assigns a tenant, WhatsApp number, tenancy start date, and recurring due day to the room.</li>
+<li>The system creates a rent obligation for each applicable billing period.</li>
+<li>At the configured reminder time, the system checks whether the obligation is still unpaid.</li>
+<li>The system either sends the tenant a WhatsApp reminder or notifies the manager with the recipient and prepared message.</li>
+<li>If sending manually, the manager reviews the message, opens WhatsApp, sends it, and records that it was sent.</li>
+<li>After receiving a transfer receipt, the manager attaches it to the correct rent obligation.</li>
+<li>The manager checks the payment and marks the obligation paid, or leaves it awaiting verification.</li>
+<li>The system stops further rent reminders for a confirmed paid obligation.</li>
+</ol>
+<h2>6. User stories and acceptance criteria</h2>
+<h3>US-01 — Manage rooms</h3>
+<p>As the manager, I want to maintain a list of rooms and rent amounts so that I know what can be rented and how much to collect.</p>
+<p>Acceptance criteria:</p>
+<ul>
+<li>I can create and edit a room&#x27;s unique name or number, monthly rent, and optional notes.</li>
+<li>Rent must be a positive amount in rupiah.</li>
+<li>I can see whether a room is occupied or available.</li>
+<li>Assigning a tenant updates the room&#x27;s occupancy.</li>
+<li>Changing a room&#x27;s price does not silently change historical bills or confirmed payments.</li>
+</ul>
+<h3>US-02 — Manage tenants and tenancies</h3>
+<p>As the manager, I want to maintain tenant contact and tenancy details so that reminders go to the correct person for the correct room.</p>
+<p>Acceptance criteria:</p>
+<ul>
+<li>I can create and edit a tenant&#x27;s name and WhatsApp number.</li>
+<li>I can assign an available room and record a tenancy start date and recurring rent due day.</li>
+<li>I can find a tenant by name or room.</li>
+<li>Invalid or missing required contact details are highlighted before saving.</li>
+<li>Indonesian phone numbers entered with <code>08</code> or <code>+62</code> are normalized for WhatsApp handoff.</li>
+<li>The system prevents conflicting active room assignments under the initial one-tenancy-per-room assumption.</li>
+<li>Ending a tenancy stops future billing and reminders without deleting its history.</li>
+</ul>
+<h3>US-03 — Track rent by billing period</h3>
+<p>As the manager, I want a separate rent record for each billing period so that payment for one month does not mark another month paid.</p>
+<p>Acceptance criteria:</p>
+<ul>
+<li>Each obligation identifies the tenancy, billing period, due date, amount due, and payment state.</li>
+<li>I can browse current and previous billing periods.</li>
+<li>A payment applies only to its selected obligation.</li>
+<li>If a due day does not exist in a month, the proposed default is the last day of that month.</li>
+<li>Unpaid obligations remain visible after their billing month ends.</li>
+<li>The system does not generate obligations outside the tenancy&#x27;s applicable dates.</li>
+<li>Rules for the first month, final month, and proration must be agreed before real billing begins.</li>
+</ul>
+<h3>US-04 — See what needs attention</h3>
+<p>As the manager, I want a clear overview of outstanding rent so that I know whom to follow up with first.</p>
+<p>Acceptance criteria:</p>
+<ul>
+<li>I can distinguish due soon, due today, overdue, awaiting verification, and paid obligations.</li>
+<li>The reminder queue shows tenant, room, billing period, amount, and due date.</li>
+<li>I can filter the queue by urgency and see overdue obligations across billing periods.</li>
+<li>Confirmed paid obligations are excluded from the reminder queue.</li>
+<li>The overview shows collected and outstanding amounts without counting unverified receipts as collected funds.</li>
+</ul>
+<h3>US-05 — Prepare a personalized reminder</h3>
+<p>As the manager, I want a reusable message template so that I do not need to compose the same reminder repeatedly.</p>
+<p>Acceptance criteria:</p>
+<ul>
+<li>I can edit the default reminder template.</li>
+<li>The template supports tenant name, room, billing period, amount due, and due date.</li>
+<li>The system fills the message from the selected obligation and shows the recipient&#x27;s name and number.</li>
+<li>I can review and edit the prepared message before manual sending.</li>
+<li>I can copy the prepared message.</li>
+<li>Missing required recipient or billing data prevents automatic delivery and surfaces a clear action to fix it.</li>
+</ul>
+<h3>US-06 — Send manually through WhatsApp</h3>
+<p>As the manager, I want to open the correct WhatsApp chat with a prepared message so that sending requires minimal effort.</p>
+<p>Acceptance criteria:</p>
+<ul>
+<li>The handoff uses the selected tenant&#x27;s normalized number and the reviewed message.</li>
+<li>Opening WhatsApp does not itself mark the reminder delivered or sent.</li>
+<li>I can explicitly record that I sent the message.</li>
+<li>The system records the obligation, recipient, message, and time of that confirmation.</li>
+<li>I can see earlier reminder attempts before deciding to follow up again.</li>
+<li>The interface clearly distinguishes manual confirmation from integration-reported delivery.</li>
+</ul>
+<h3>US-07 — Receive reminders without opening the website</h3>
+<p>As the manager, I want the system to notify me when rent needs follow-up so that I do not have to remember to check the website.</p>
+<p>Acceptance criteria:</p>
+<ul>
+<li>Reminders run on a schedule while the website is closed.</li>
+<li>The manager&#x27;s notification channel and destination are configured and tested before activation.</li>
+<li>A notification includes the tenant&#x27;s name, WhatsApp number, room, billing period, amount, due date, and prepared message, or an authenticated link to those details.</li>
+<li>Where supported, the notification provides a direct WhatsApp handoff.</li>
+<li>The system rechecks payment and tenancy status before delivering a reminder.</li>
+<li>A scheduled run does not send the same planned reminder twice, including during retries.</li>
+<li>The manager can see failed attempts and retry them after fixing the cause.</li>
+<li>Timing uses the kost&#x27;s configured timezone; Asia/Jakarta is the initial proposed default.</li>
+<li>A receipt awaiting verification appears in the manager&#x27;s review queue; the proposed default is to pause tenant follow-ups until it is reviewed.</li>
+</ul>
+<h3>US-08 — Send WhatsApp reminders automatically</h3>
+<p>As the manager, I want eligible reminders delivered directly to tenants so that routine follow-up needs less manual work.</p>
+<p>Priority: Preferred integration; feasibility and release timing to be confirmed.</p>
+<p>Acceptance criteria:</p>
+<ul>
+<li>The integration uses a supported WhatsApp sending mechanism.</li>
+<li>The manager can review the message template and reminder schedule before enabling automatic delivery.</li>
+<li>Sending respects the current obligation, payment state, tenancy status, and configured timing.</li>
+<li>The system records attempts and the sending provider&#x27;s reported statuses.</li>
+<li>A failed attempt is visible and can fall back to manager-assisted sending.</li>
+<li>Retries do not create duplicate reminders.</li>
+<li>Automatic sending can be disabled without losing records or manual reminder functionality.</li>
+</ul>
+<h3>US-09 — Record a transfer receipt</h3>
+<p>As the manager, I want to attach a received transfer receipt to the correct bill so that payment evidence is easy to find.</p>
+<p>Acceptance criteria:</p>
+<ul>
+<li>I can select the tenant and billing period, enter the transfer date and amount, add a note, and attach a receipt.</li>
+<li>Accepted file types and size limits are shown before upload; invalid files produce a clear error.</li>
+<li>I can open the attached receipt while reviewing the payment.</li>
+<li>Saving a receipt creates an awaiting-verification state and does not silently confirm that funds arrived.</li>
+<li>Payment evidence survives a refresh and, in the operational MVP, is available to authorized managers on other devices.</li>
+<li>Manual attachment is sufficient initially; automatic receipt ingestion from WhatsApp is not required for the MVP.</li>
+</ul>
+<h3>US-10 — Confirm or correct a payment</h3>
+<p>As the manager, I want to confirm payment after reviewing the transfer so that the rent record reflects what has actually been received.</p>
+<p>Acceptance criteria:</p>
+<ul>
+<li>I can mark a rent obligation paid after checking the transfer.</li>
+<li>Confirmation records the amount, transfer date, confirmation time, and confirming manager.</li>
+<li>Confirmed payment updates the collected total and stops subsequent rent reminders for that obligation.</li>
+<li>I can correct an accidental confirmation without deleting its receipt or correction history.</li>
+<li>A duplicate submission does not count the same payment twice.</li>
+<li>An unmatched amount is flagged for review rather than silently treated as full payment.</li>
+<li>Partial payments, overpayments, and payments covering multiple months require an agreed allocation rule before they are supported.</li>
+</ul>
+<h3>US-11 — Keep records protected and recoverable</h3>
+<p>As the family, we want reliable access to rent records so that device loss or an accidental edit does not erase our working history.</p>
+<p>Acceptance criteria for the operational MVP:</p>
+<ul>
+<li>Tenant details and payment evidence require authorized manager access.</li>
+<li>Records are stored durably and remain available across the family&#x27;s authorized devices.</li>
+<li>The manager can export core records in a documented format.</li>
+<li>A backup and recovery process is defined and tested before operational use.</li>
+<li>Saving, uploading, and delivery failures are visible; the interface does not claim success when persistence or delivery failed.</li>
+<li>Payment confirmations and corrections retain a basic audit history.</li>
+</ul>
+<h2>7. Minimum data model</h2>
+<div class="table-scroll"><table><thead><tr><th>Entity</th><th>Minimum information</th></tr></thead><tbody>
+<tr><td>Property</td><td>Name, timezone</td></tr>
+<tr><td>Room</td><td>ID, unique room label within property, default monthly rent, notes</td></tr>
+<tr><td>Tenant</td><td>ID, name, WhatsApp number</td></tr>
+<tr><td>Tenancy</td><td>ID, tenant, room, start/end dates, recurring due rule, agreed rent</td></tr>
+<tr><td>Rent obligation</td><td>ID, tenancy, billing period, due date, amount due, state</td></tr>
+<tr><td>Payment</td><td>ID, obligation, amount, transfer date, verification state, notes, confirmation details</td></tr>
+<tr><td>Receipt</td><td>ID, payment, file reference, file metadata</td></tr>
+<tr><td>Reminder</td><td>ID, obligation, recipient, rendered message, scheduled time, channel, attempt status, sent/delivery timestamps</td></tr>
+<tr><td>Settings</td><td>Message template, reminder timing, manager notification destination, automatic-sending preference</td></tr>
+</tbody></table></div>
+<p>Keep rent obligations separate from payments and reminder attempts. A receipt is evidence associated with a payment, not proof by itself that the rent is settled.</p>
+<h2>8. State and business rules</h2>
+<h3>Payment state</h3>
+<p><code>Unpaid → Awaiting verification → Paid</code></p>
+<ul>
+<li>A payment may be confirmed directly when the manager has already verified the transfer.</li>
+<li>A mistaken confirmation can return to awaiting verification, retaining a correction record.</li>
+<li>Due soon and overdue describe the obligation&#x27;s timing; they are not payment verification states.</li>
+</ul>
+<h3>Reminder state</h3>
+<p><code>Scheduled → Prepared → Manually confirmed sent / Provider accepted → Delivered, if reported</code></p>
+<ul>
+<li>Failures are recorded separately and can be retried.</li>
+<li>Opening a chat, provider acceptance, and confirmed delivery are different events.</li>
+<li>Reminder history remains available after payment.</li>
+</ul>
+<h3>Proposed scheduling defaults</h3>
+<ul>
+<li>First reminder: three days before the due date.</li>
+<li>Reminder on the due date: to be confirmed.</li>
+<li>Overdue follow-up cadence and sending hours: to be confirmed.</li>
+<li>No reminders after payment confirmation or after the relevant tenancy has ended.</li>
+<li>No repeated automatic attempts without deduplication and an explicit retry policy.</li>
+</ul>
+<h2>9. Experience requirements</h2>
+<ul>
+<li>Optimize the main tasks for a phone, while keeping desktop usable.</li>
+<li>Use clear Bahasa Indonesia and rupiah formatting unless feedback suggests otherwise.</li>
+<li>Make tenant, room, amount, billing period, and payment state visible before a consequential action.</li>
+<li>Keep the reminder and receipt workflows short and understandable without technical knowledge.</li>
+<li>Clearly label sample data, manual actions, and features that are not connected yet.</li>
+<li>Provide readable text, labeled controls, keyboard navigation, and clear validation errors.</li>
+</ul>
+<h2>10. Current prototype versus operational requirements</h2>
+<p>The current implementation is a feedback tool, not a completed operational MVP.</p>
+<div class="table-scroll"><table><thead><tr><th>Capability</th><th>Current prototype</th><th>Still needed for operational use</th></tr></thead><tbody>
+<tr><td>Rooms and tenants</td><td>Create and edit; current room assignment</td><td>Tenancy lifecycle and retained assignment history</td></tr>
+<tr><td>Rent periods</td><td>Calendar-month view; recurring due day</td><td>Durable obligations, historical rent snapshots, and cross-month arrears</td></tr>
+<tr><td>Reminder preparation</td><td>Personalized, editable message; copy; WhatsApp handoff</td><td>Agreed timing and complete attempt history</td></tr>
+<tr><td>Reminder automation</td><td>On-screen queue only</td><td>Background scheduler and manager notifications; optional direct tenant delivery</td></tr>
+<tr><td>Payments</td><td>Manual entry, review, confirmation, undo</td><td>Durable storage, audit trail, and agreed exception handling</td></tr>
+<tr><td>Receipts</td><td>Browser-local image attachment, up to 1 MB per file</td><td>Protected shared storage and recovery</td></tr>
+<tr><td>Data</td><td>Browser localStorage; JSON export</td><td>Shared database, backup, and tested recovery</td></tr>
+<tr><td>Access</td><td>Private hosted site</td><td>Confirm family access and application-level authorization needs</td></tr>
+</tbody></table></div>
+<p>Prototype limitations include no move-out flow, no historical price schedule, no arrears carryover, no partial-payment allocation, no automatic receipt reading, and no notification delivery while the site is closed. Local browser storage is not the intended long-term storage design.</p>
+<h2>11. Decisions to validate with the manager</h2>
+<div class="table-scroll"><table><thead><tr><th>Question</th><th>Why it matters</th></tr></thead><tbody>
+<tr><td>How many rooms, properties, and managers are involved?</td><td>Sets scope and access needs.</td></tr>
+<tr><td>Is the due date a fixed day each month, based on move-in date, or something else?</td><td>Determines the billing rule.</td></tr>
+<tr><td>Can one room have multiple tenants or recipients?</td><td>Determines tenancy and reminder targeting.</td></tr>
+<tr><td>When should reminders arrive, and how often should overdue tenants be followed up?</td><td>Determines scheduling and avoids excessive messaging.</td></tr>
+<tr><td>If direct tenant WhatsApp sending is unavailable, where should the manager receive reminders?</td><td>The fallback must reach her without opening the website.</td></tr>
+<tr><td>Should receipts awaiting verification pause follow-ups?</td><td>Prevents unwanted messages while preserving visibility of unconfirmed funds.</td></tr>
+<tr><td>Is receipt arrival enough to mark paid, or must bank receipt be checked first?</td><td>Confirms the proposed manual-verification policy.</td></tr>
+<tr><td>Are there partial payments, deposits, utilities, discounts, or multi-month transfers?</td><td>Determines whether a simple monthly-rent model is sufficient.</td></tr>
+<tr><td>What happens for mid-month move-in, move-out, and rent changes?</td><td>Prevents incorrect obligations.</td></tr>
+<tr><td>What bank/payment details should a reminder include?</td><td>Completes the message content.</td></tr>
+<tr><td>How does the manager currently receive and organize receipts?</td><td>Determines whether manual attachment is practical.</td></tr>
+<tr><td>What existing records need importing?</td><td>Determines onboarding effort and migration needs.</td></tr>
+</tbody></table></div>
+<h2>12. Prototype feedback plan</h2>
+<p>Ask the manager to complete these tasks on her usual phone:</p>
+<ol>
+<li>Add a room and a tenant with a due date.</li>
+<li>Find a tenant whose rent is due and prepare a reminder.</li>
+<li>Review the recipient and wording, then explain how she would send it.</li>
+<li>Record a received receipt and distinguish it from a confirmed payment.</li>
+<li>Confirm payment and check that the tenant no longer needs a rent reminder.</li>
+<li>Correct an accidental payment confirmation.</li>
+<li>Describe how she expects to hear about tomorrow&#x27;s reminders while the website is closed.</li>
+</ol>
+<p>Use sample numbers during testing; sending actual tenant messages is unnecessary for workflow validation.</p>
+<p>For each session, record:</p>
+<ul>
+<li>Task attempted and whether it was completed without help.</li>
+<li>Confusing wording, missing information, and unnecessary steps.</li>
+<li>Any mismatch with the family&#x27;s actual billing or payment process.</li>
+<li>The proposed change, its priority, and how it will be checked in the next session.</li>
+</ul>
+<h2>13. MVP completion criteria</h2>
+<p>The operational MVP is ready when:</p>
+<ul>
+<li>The manager can maintain real rooms, tenants, and tenancy due rules.</li>
+<li>Rent obligations are correct for the agreed billing cases and retain their history.</li>
+<li>A scheduled reminder reaches the agreed recipient while the website is closed.</li>
+<li>The recipient, amount, billing period, and due date match the underlying obligation.</li>
+<li>The manual WhatsApp fallback is usable if direct integration is unavailable.</li>
+<li>A received receipt can be reviewed and payment confirmation stops future reminders.</li>
+<li>Failed delivery, duplicate runs, incorrect confirmation, and persistence failures have been exercised.</li>
+<li>Authorized family members can use the same records on their devices.</li>
+<li>Backup and recovery have been checked.</li>
+<li>The primary manager has completed the main workflow on her phone and accepted it for a small real-world pilot.</li>
+</ul>
+<h2>14. Deferred unless feedback changes priority</h2>
+<ul>
+<li>Tenant accounts or a tenant-facing portal.</li>
+<li>Automatic receipt OCR and bank reconciliation.</li>
+<li>Accounting, tax reporting, and expense management.</li>
+<li>Online payment collection.</li>
+<li>Maintenance requests and other property-management workflows.</li>
+<li>Advanced multi-property administration.</li>
+</ul>
+<p>Direct WhatsApp sending remains a preferred product capability; it is not a prerequisite for the fallback MVP if the manager reliably receives prepared reminders.</p></article><div class="document-nav"><a href="docs/requirements.md" download>↓ Download Markdown</a><a href="brief.html">Read the short brief ↗</a></div></main></body></html>
