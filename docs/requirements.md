@@ -1,5 +1,7 @@
 # Kost Rapi — Product Requirements
 
+For a quick overview, start with the [product brief](product-brief.md). This document expands it into scope, user stories, acceptance criteria, and decisions to validate.
+
 Status: Draft for family review  
 Last updated: 2026-10-25  
 Primary user: The family member managing the kost  
