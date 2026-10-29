@@ -56,4 +56,50 @@ test('overlap is blocked for paid and review records, but not adjacent coverage'
     assert.equal(Billing.overlaps([p], { id: 'new', tenant: 't2', period: '2026-10', months: 3 }), false);
   }
 });
+test('a six-million six-month agreement charges one million each month before payment', () => {
+  const tenant = { id: 't', start: '2026-10-01', termStart: '2026-10-01', day: 1, term: 6, termRate: 6000000, agreements: [{ start: '2026-10-01', months: 6, total: 6000000, day: 1 }] };
+  for (let i = 0; i < 6; i++) {
+    const entry = Billing.ledger(tenant, [], Billing.shift('2026-10', i), 1500000);
+    assert.equal(entry.charge, 1000000);
+    assert.equal(entry.paid, 0);
+    assert.equal(entry.balance, 1000000);
+  }
+});
+test('paid and review transfers spread into separate ledger balances', () => {
+  const tenant = { id: 't', start: '2026-10-01', term: 6, termRate: 6000000, day: 1 };
+  const payment = { id: 'p', tenant: 't', period: '2026-10', months: 6, amount: 6000000, status: 'paid' };
+  let total = 0;
+  for (const reference of Billing.covered(payment)) {
+    const entry = Billing.ledger(tenant, [payment], reference, 1500000);
+    assert.equal(entry.charge, 1000000);
+    assert.equal(entry.paid, 1000000);
+    assert.equal(entry.balance, 0);
+    total += entry.paid;
+    const review = Billing.ledger(tenant, [{ ...payment, status: 'review' }], reference, 1500000);
+    assert.equal(review.paid, 0);
+    assert.equal(review.balance, 1000000);
+  }
+  assert.equal(total, payment.amount);
+  assert.equal(Billing.ledger(tenant, [payment], '2027-04', 1500000).paid, 0);
+});
+test('rounding spreads whole rupiah and conserves a non-divisible term total', () => {
+  const payment = { period: '2026-10', months: 3, amount: 1000000 };
+  const amounts = Billing.covered(payment).map(reference => Billing.monthlyAmount(payment, reference));
+  assert.equal(amounts.join(','), '333334,333333,333333');
+  assert.equal(amounts.reduce((sum, value) => sum + value, 0), 1000000);
+  assert.equal(Billing.monthlyAmount(payment, '2027-01'), 0);
+});
+test('saved contract history preserves older charges through a renewal price change', () => {
+  const tenant = { id: 't', start: '2026-10-01', termStart: '2027-04-01', day: 1, term: 6, termRate: 9000000, agreements: [{ start: '2026-10-01', months: 6, total: 6000000, day: 1 }, { start: '2027-04-01', months: 6, total: 9000000, day: 1 }] };
+  assert.equal(Billing.monthlyCharge(tenant, '2027-01', 2000000), 1000000);
+  assert.equal(Billing.monthlyCharge(tenant, '2027-07', 2000000), 1500000);
+  assert.equal(Billing.cycle(tenant, '2027-01').period, '2026-10');
+  assert.equal(Billing.cycle(tenant, '2027-07').period, '2027-04');
+  assert.equal(Billing.ledger(tenant, [], '2026-09', 2000000).active, false);
+});
+test('explicit payment allocations preserve different monthly contract charges', () => {
+  const payment = { period: '2026-10', months: 2, amount: 2500000, allocations: [1000000, 1500000] };
+  assert.equal(Billing.monthlyAmount(payment, '2026-10'), 1000000);
+  assert.equal(Billing.monthlyAmount(payment, '2026-11'), 1500000);
+});
 console.log(`${tests.length} billing checks passed:\n` + tests.map(name => `- ${name}`).join('\n'));

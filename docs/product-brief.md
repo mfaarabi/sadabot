@@ -12,11 +12,11 @@ The primary user is the family member managing the kost. Tenants can continue us
 
 | Need | Expected result |
 | --- | --- |
-| Manage rooms and tenants | Keep room assignments, rent amounts, contact numbers, and 1/3/6/12-month rental terms together, with calculated renewal deadlines. |
+| Manage rooms and tenants | Keep room assignments, rent amounts, contact numbers, and 1/3/6/12-month rental terms together, with a total term price, monthly allocation, and calculated renewal deadlines. |
 | Know who needs attention | Clearly show upcoming rent, overdue rent, payments awaiting review, and paid rent. |
 | Remember to follow up | Send reminders even when the website is closed. Ideally message tenants through WhatsApp; otherwise notify the manager with the recipient and a ready-to-send message. |
 | Choose the right message | Select or customize payment, overdue, and renewal templates, including asking whether a tenant wants to keep or change their term. |
-| Track payments | Record a transfer covering several months and attach its receipt once. Show each covered month’s share and confirm payment after review. |
+| Track payments | Record a transfer covering several months and attach its receipt once. Use a monthly or 12-month ledger to show each month’s charge, paid share, and balance. Confirm payment after review. |
 | Keep reliable records | Preserve payment history and let authorized family members access the same records on their devices. |
 
 ## How it should feel
@@ -27,7 +27,7 @@ The website should work comfortably on the manager's phone, with clear wording a
 
 ## What we have today
 
-The interactive prototype lets us try room and tenant management, multiple WhatsApp templates, term-based deadlines, receipt attachment, and manual payment confirmation using sample data. Multi-month payments appear in every covered month without counting the whole transfer repeatedly.
+The interactive prototype lets us try room and tenant management, multiple WhatsApp templates, term-based deadlines, receipt attachment, and manual payment confirmation using sample data. A total term price is spread across its months: Rp6,000,000 over six months means Rp1,000,000 charged per month. The ledger shows the charge, paid share, and balance for each month; the full transfer stays in its details.
 
 It currently saves changes only in the browser. It does **not** yet send background notifications, automatically message tenants, or share records between devices. The next milestone is reliable reminders and shared records, refined through the manager's feedback.
 

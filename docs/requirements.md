@@ -105,12 +105,18 @@ Acceptance criteria:
 
 - Each obligation identifies the tenancy, billing period, due date, amount due, and payment state.
 - I can browse current and previous billing periods.
-- A tenancy has a term of 1, 3, 6, or 12 months; the form previews the total rent and next renewal deadline.
+- A tenancy has a term of 1, 3, 6, or 12 months and an explicit total price for the whole term. The form previews the monthly charge and next renewal deadline.
+- The total term price is divided across its months; it is never treated as a monthly price and multiplied again. For example, Rp6,000,000 for six months means Rp1,000,000 charged per month.
+- Contract prices are saved with their effective start dates so renewal price changes preserve earlier monthly charges.
 - Renewal dates retain the original due day, clamped to the end of shorter months.
 - When changing tenure at renewal, the manager records the new term start; earlier payment coverage and amounts are preserved.
 - One payment can cover 1–12 consecutive calendar months, beginning in the selected month. The payment stores its total transfer once and allocates equal monthly shares.
 - Every covered month displays the same payment record as paid or awaiting verification, as applicable.
-- Monthly totals include only that month’s share, not the whole transfer.
+- The monthly ledger has separate charge, verified paid allocation, and outstanding balance columns. The whole transfer is shown only in payment details, not repeated in monthly rows.
+- A 12-month ledger shows consecutive months side by side, including across year boundaries; selecting a month opens its payment record.
+- Monthly totals include only that month’s share, not the whole transfer. The ledger represents rent allocation, not cash received on the transfer date.
+- Charges are visible before payment. A verified prepaid transfer offsets each covered month’s charge; an unverified receipt does not.
+- Whole-rupiah rounding differences are allocated to the earliest months, so the sum of monthly shares equals the term or transfer total exactly.
 - Overlapping payment coverage for the same tenant is rejected, including unverified payments.
 - Payment details opened from any covered month show total transfer, full coverage range, and that month’s allocation.
 - If a due day does not exist in a month, the proposed default is the last day of that month.
@@ -199,8 +205,8 @@ As the manager, I want to attach a received transfer receipt to the correct bill
 Acceptance criteria:
 
 - I can select the tenant, first covered month, and number of months paid; enter the transfer date and total amount; add a note; and attach a receipt.
-- The form defaults to the tenant’s term and calculates the expected total and monthly allocation.
-- The prototype supports 1–12 months and requires total transfer to equal monthly rent multiplied by the number of months.
+- The form defaults to the tenant’s term and calculates the expected total as the sum of agreed monthly ledger charges, showing each month’s allocation before saving.
+- The prototype supports 1–12 months and requires the total transfer to match the sum of the agreed charges for those months.
 - A receipt is attached once to the transfer and is accessible from each covered month.
 - Accepted file types and size limits are shown before upload; invalid files produce a clear error.
 - I can open the attached receipt while reviewing the payment.
@@ -221,7 +227,7 @@ Acceptance criteria:
 - Confirming or reversing a multi-month payment updates every month covered by that transfer. The interface explains that the action affects the full coverage range.
 - A duplicate submission does not count the same payment twice.
 - An unmatched amount is flagged for review rather than silently treated as full payment.
-- Multi-month transfers use equal full-month allocation. Partial payments, overpayments, and discounts remain outside the prototype until allocation rules are agreed.
+- Multi-month transfers use agreed monthly charges, divided from the total term price with whole-rupiah rounding when necessary. Partial payments, overpayments, and discounts remain outside the prototype until allocation rules are agreed.
 
 ### US-11 — Keep records protected and recoverable
 
@@ -243,7 +249,7 @@ Acceptance criteria for the operational MVP:
 | Property | Name, timezone |
 | Room | ID, unique room label within property, default monthly rent, notes |
 | Tenant | ID, name, WhatsApp number |
-| Tenancy | ID, tenant, room, start/end dates, current term start, term length, recurring due rule, agreed rent |
+| Tenancy | ID, tenant, room, start/end dates, current term start, term length, total term price, effective-dated price agreements, recurring due rule |
 | Rent obligation | ID, tenancy, billing period, due date, amount due, state |
 | Payment | ID, tenant/obligation, first covered month, number of covered months, total transfer, monthly allocation, transfer date, verification state, notes, confirmation details |
 | Receipt | ID, payment, file reference, file metadata |
@@ -294,7 +300,7 @@ The current implementation is a feedback tool, not a completed operational MVP.
 | Capability | Current prototype | Still needed for operational use |
 | --- | --- | --- |
 | Rooms and tenants | Create and edit; current room assignment | Tenancy lifecycle and retained assignment history |
-| Rent periods | Calendar-month view; 1/3/6/12-month tenure and calculated renewal deadlines | Durable obligations, historical rent schedules, and cross-month arrears |
+| Rent periods | Monthly and 12-month ledgers; total term pricing spread into monthly charges; renewal deadlines and effective-dated price changes | Durable obligations and cross-month arrears |
 | Reminder preparation | Multiple editable templates, including renewal questions; copy; WhatsApp handoff; saved sent text | Agreed timing and complete delivery history |
 | Reminder automation | On-screen queue only | Background scheduler and manager notifications; optional direct tenant delivery |
 | Payments | Multi-month entry with equal monthly allocation; review, confirmation, undo; overlap prevention | Durable storage, audit trail, and agreed exception handling |
@@ -302,7 +308,7 @@ The current implementation is a feedback tool, not a completed operational MVP.
 | Data | Browser localStorage; JSON export | Shared database, backup, and tested recovery |
 | Access | Private hosted site | Confirm family access and application-level authorization needs |
 
-Prototype limitations include no move-out flow, no historical price schedule, no arrears carryover, no partial-month or discounted-payment allocation, no automatic receipt reading, and no notification delivery while the site is closed. Local browser storage is not the intended long-term storage design.
+Prototype limitations include no move-out flow,  no arrears carryover, no partial-month or discounted-payment allocation, no automatic receipt reading, and no notification delivery while the site is closed. Local browser storage is not the intended long-term storage design.
 
 ## 11. Decisions to validate with the manager
 
@@ -334,7 +340,9 @@ Ask the manager to complete these tasks on her usual phone:
 7. Describe how she expects to hear about tomorrow's reminders while the website is closed.
 8. Set a 3/6/12-month tenure and check the calculated renewal deadline.
 9. Choose the renewal chat template and check the personalized term question.
-10. Record a three-month transfer, browse all covered months, and verify that each month shows only its own share.
+10. Enter a six-month term price of Rp6,000,000 and verify Rp1,000,000 charged in each monthly ledger column before payment.
+11. Record and confirm that six-month transfer, browse all covered months, and verify Rp1,000,000 paid and Rp0 remaining in each.
+12. Change the renewal price and confirm that earlier monthly charges remain unchanged.
 
 Use sample numbers during testing; sending actual tenant messages is unnecessary for workflow validation.
 
