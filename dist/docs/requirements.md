@@ -3,7 +3,7 @@
 For a quick overview, start with the [product brief](product-brief.md). This document expands it into scope, user stories, acceptance criteria, and decisions to validate.
 
 Status: Draft for family review  
-Last updated: 2026-10-25  
+Last updated: 2026-10-30
 Primary user: The family member managing the kost  
 Delivery approach: Small web prototype, tested and refined with the primary user
 
@@ -32,15 +32,18 @@ The product should make it clear who needs attention, prepare the correct remind
 - If direct WhatsApp integration is difficult, the product should at least send the manager the prepared message and recipient so she can send it herself.
 - The product needs a way to mark payments as done after receiving a transfer receipt.
 - Prototyping and frequent feedback are central to development.
+- The manager can choose from multiple chat templates, including asking whether a tenant wants to keep or change their rental term.
+- Rental terms support 3, 6, and 12 months, with deadlines calculated from the term start. Monthly terms remain supported.
+- A payment covering several months must appear in each covered monthly payment view.
 
 ### Proposed defaults — subject to validation
 
 - Interface language: Bahasa Indonesia; currency: Indonesian rupiah.
-- Rent is billed monthly, with a recurring due day per tenancy.
+- Rent is priced per month; a tenancy has a 1/3/6/12-month term. The current term start and term length determine renewal deadlines.
 - Reminder timing starts three days before the due date.
 - Only the manager uses the initial product; tenants continue using WhatsApp.
 - The manager verifies that funds arrived before marking a payment paid.
-- The first operational release supports one kost and full monthly payments.
+- The first operational release supports one kost and full-month allocations. Partial-month payments, discounts, and overpayments still require agreed rules.
 
 These defaults are working assumptions, not requirements already approved by the family.
 
@@ -48,7 +51,7 @@ These defaults are working assumptions, not requirements already approved by the
 
 | Stage | Purpose | Included | Completion condition |
 | --- | --- | --- | --- |
-| Interactive prototype | Validate the workflow | Sample tenants and rooms; due dates; reminder queue; editable messages; WhatsApp handoff; receipt attachment; manual payment confirmation | The manager can walk through the main tasks and give specific feedback |
+| Interactive prototype | Validate the workflow | Sample tenants and rooms; term-based due dates; selectable templates; reminder queue; WhatsApp handoff; multi-month payment allocation; receipt attachment; manual payment confirmation | The manager can walk through the main tasks and give specific feedback |
 | Operational MVP | Solve the remembering problem reliably | Durable shared data; protected manager access; scheduled reminders; delivery to the manager through an agreed channel; recipient and message handoff; payment records and receipts | A due reminder reaches the manager while the site is closed, and payment state reliably suppresses unnecessary reminders |
 | WhatsApp automation | Reduce manual sending further | Direct scheduled tenant delivery, if the supported integration is practical; delivery status and failure recovery | A reminder reaches the intended tenant once, with observable success or failure |
 
@@ -57,7 +60,7 @@ Direct WhatsApp automation is the preferred outcome. Reliable delivery of a prep
 ## 5. Main workflow
 
 1. The manager creates a room with its rent amount.
-2. The manager assigns a tenant, WhatsApp number, tenancy start date, and recurring due day to the room.
+2. The manager assigns a tenant, WhatsApp number, tenancy start date, current term start, and a 1/3/6/12-month term to the room.
 3. The system creates a rent obligation for each applicable billing period.
 4. At the configured reminder time, the system checks whether the obligation is still unpaid.
 5. The system either sends the tenant a WhatsApp reminder or notifies the manager with the recipient and prepared message.
@@ -87,7 +90,7 @@ As the manager, I want to maintain tenant contact and tenancy details so that re
 Acceptance criteria:
 
 - I can create and edit a tenant's name and WhatsApp number.
-- I can assign an available room and record a tenancy start date and recurring rent due day.
+- I can assign an available room and record the move-in date, current term start, and rental term (1/3/6/12 months).
 - I can find a tenant by name or room.
 - Invalid or missing required contact details are highlighted before saving.
 - Indonesian phone numbers entered with `08` or `+62` are normalized for WhatsApp handoff.
@@ -96,13 +99,20 @@ Acceptance criteria:
 
 ### US-03 — Track rent by billing period
 
-As the manager, I want a separate rent record for each billing period so that payment for one month does not mark another month paid.
+As the manager, I want a separate rent record for each billing period so that each payment marks exactly the months it covers.
 
 Acceptance criteria:
 
 - Each obligation identifies the tenancy, billing period, due date, amount due, and payment state.
 - I can browse current and previous billing periods.
-- A payment applies only to its selected obligation.
+- A tenancy has a term of 1, 3, 6, or 12 months; the form previews the total rent and next renewal deadline.
+- Renewal dates retain the original due day, clamped to the end of shorter months.
+- When changing tenure at renewal, the manager records the new term start; earlier payment coverage and amounts are preserved.
+- One payment can cover 1–12 consecutive calendar months, beginning in the selected month. The payment stores its total transfer once and allocates equal monthly shares.
+- Every covered month displays the same payment record as paid or awaiting verification, as applicable.
+- Monthly totals include only that month’s share, not the whole transfer.
+- Overlapping payment coverage for the same tenant is rejected, including unverified payments.
+- Payment details opened from any covered month show total transfer, full coverage range, and that month’s allocation.
 - If a due day does not exist in a month, the proposed default is the last day of that month.
 - Unpaid obligations remain visible after their billing month ends.
 - The system does not generate obligations outside the tenancy's applicable dates.
@@ -126,8 +136,12 @@ As the manager, I want a reusable message template so that I do not need to comp
 
 Acceptance criteria:
 
-- I can edit the default reminder template.
-- The template supports tenant name, room, billing period, amount due, and due date.
+- I can choose among payment reminder, renewal confirmation, and overdue follow-up templates.
+- I can create, name, edit, and delete saved templates, retaining at least one template.
+- Existing custom template text is retained when upgrading the prototype.
+- Templates support tenant name, room, billing period/range, total term rent, due date, tenure, and current term end date.
+- A renewal template asks whether the tenant wants to keep the same term or change to 3, 6, or 12 months. It can be prepared even when the current term is already paid.
+- Changing the selected template regenerates the draft; the manager can edit it before sending.
 - The system fills the message from the selected obligation and shows the recipient's name and number.
 - I can review and edit the prepared message before manual sending.
 - I can copy the prepared message.
@@ -142,7 +156,7 @@ Acceptance criteria:
 - The handoff uses the selected tenant's normalized number and the reviewed message.
 - Opening WhatsApp does not itself mark the reminder delivered or sent.
 - I can explicitly record that I sent the message.
-- The system records the obligation, recipient, message, and time of that confirmation.
+- The system records the obligation, recipient, chosen template, actual edited message, and time of that confirmation.
 - I can see earlier reminder attempts before deciding to follow up again.
 - The interface clearly distinguishes manual confirmation from integration-reported delivery.
 
@@ -184,7 +198,10 @@ As the manager, I want to attach a received transfer receipt to the correct bill
 
 Acceptance criteria:
 
-- I can select the tenant and billing period, enter the transfer date and amount, add a note, and attach a receipt.
+- I can select the tenant, first covered month, and number of months paid; enter the transfer date and total amount; add a note; and attach a receipt.
+- The form defaults to the tenant’s term and calculates the expected total and monthly allocation.
+- The prototype supports 1–12 months and requires total transfer to equal monthly rent multiplied by the number of months.
+- A receipt is attached once to the transfer and is accessible from each covered month.
 - Accepted file types and size limits are shown before upload; invalid files produce a clear error.
 - I can open the attached receipt while reviewing the payment.
 - Saving a receipt creates an awaiting-verification state and does not silently confirm that funds arrived.
@@ -201,9 +218,10 @@ Acceptance criteria:
 - Confirmation records the amount, transfer date, confirmation time, and confirming manager.
 - Confirmed payment updates the collected total and stops subsequent rent reminders for that obligation.
 - I can correct an accidental confirmation without deleting its receipt or correction history.
+- Confirming or reversing a multi-month payment updates every month covered by that transfer. The interface explains that the action affects the full coverage range.
 - A duplicate submission does not count the same payment twice.
 - An unmatched amount is flagged for review rather than silently treated as full payment.
-- Partial payments, overpayments, and payments covering multiple months require an agreed allocation rule before they are supported.
+- Multi-month transfers use equal full-month allocation. Partial payments, overpayments, and discounts remain outside the prototype until allocation rules are agreed.
 
 ### US-11 — Keep records protected and recoverable
 
@@ -225,9 +243,9 @@ Acceptance criteria for the operational MVP:
 | Property | Name, timezone |
 | Room | ID, unique room label within property, default monthly rent, notes |
 | Tenant | ID, name, WhatsApp number |
-| Tenancy | ID, tenant, room, start/end dates, recurring due rule, agreed rent |
+| Tenancy | ID, tenant, room, start/end dates, current term start, term length, recurring due rule, agreed rent |
 | Rent obligation | ID, tenancy, billing period, due date, amount due, state |
-| Payment | ID, obligation, amount, transfer date, verification state, notes, confirmation details |
+| Payment | ID, tenant/obligation, first covered month, number of covered months, total transfer, monthly allocation, transfer date, verification state, notes, confirmation details |
 | Receipt | ID, payment, file reference, file metadata |
 | Reminder | ID, obligation, recipient, rendered message, scheduled time, channel, attempt status, sent/delivery timestamps |
 | Settings | Message template, reminder timing, manager notification destination, automatic-sending preference |
@@ -276,15 +294,15 @@ The current implementation is a feedback tool, not a completed operational MVP.
 | Capability | Current prototype | Still needed for operational use |
 | --- | --- | --- |
 | Rooms and tenants | Create and edit; current room assignment | Tenancy lifecycle and retained assignment history |
-| Rent periods | Calendar-month view; recurring due day | Durable obligations, historical rent snapshots, and cross-month arrears |
-| Reminder preparation | Personalized, editable message; copy; WhatsApp handoff | Agreed timing and complete attempt history |
+| Rent periods | Calendar-month view; 1/3/6/12-month tenure and calculated renewal deadlines | Durable obligations, historical rent schedules, and cross-month arrears |
+| Reminder preparation | Multiple editable templates, including renewal questions; copy; WhatsApp handoff; saved sent text | Agreed timing and complete delivery history |
 | Reminder automation | On-screen queue only | Background scheduler and manager notifications; optional direct tenant delivery |
-| Payments | Manual entry, review, confirmation, undo | Durable storage, audit trail, and agreed exception handling |
+| Payments | Multi-month entry with equal monthly allocation; review, confirmation, undo; overlap prevention | Durable storage, audit trail, and agreed exception handling |
 | Receipts | Browser-local image attachment, up to 1 MB per file | Protected shared storage and recovery |
 | Data | Browser localStorage; JSON export | Shared database, backup, and tested recovery |
 | Access | Private hosted site | Confirm family access and application-level authorization needs |
 
-Prototype limitations include no move-out flow, no historical price schedule, no arrears carryover, no partial-payment allocation, no automatic receipt reading, and no notification delivery while the site is closed. Local browser storage is not the intended long-term storage design.
+Prototype limitations include no move-out flow, no historical price schedule, no arrears carryover, no partial-month or discounted-payment allocation, no automatic receipt reading, and no notification delivery while the site is closed. Local browser storage is not the intended long-term storage design.
 
 ## 11. Decisions to validate with the manager
 
@@ -297,7 +315,7 @@ Prototype limitations include no move-out flow, no historical price schedule, no
 | If direct tenant WhatsApp sending is unavailable, where should the manager receive reminders? | The fallback must reach her without opening the website. |
 | Should receipts awaiting verification pause follow-ups? | Prevents unwanted messages while preserving visibility of unconfirmed funds. |
 | Is receipt arrival enough to mark paid, or must bank receipt be checked first? | Confirms the proposed manual-verification policy. |
-| Are there partial payments, deposits, utilities, discounts, or multi-month transfers? | Determines whether a simple monthly-rent model is sufficient. |
+| Are there partial payments, deposits, utilities, or discounts? | Multi-month transfers are supported; these exceptions still need allocation rules. |
 | What happens for mid-month move-in, move-out, and rent changes? | Prevents incorrect obligations. |
 | What bank/payment details should a reminder include? | Completes the message content. |
 | How does the manager currently receive and organize receipts? | Determines whether manual attachment is practical. |
@@ -314,6 +332,9 @@ Ask the manager to complete these tasks on her usual phone:
 5. Confirm payment and check that the tenant no longer needs a rent reminder.
 6. Correct an accidental payment confirmation.
 7. Describe how she expects to hear about tomorrow's reminders while the website is closed.
+8. Set a 3/6/12-month tenure and check the calculated renewal deadline.
+9. Choose the renewal chat template and check the personalized term question.
+10. Record a three-month transfer, browse all covered months, and verify that each month shows only its own share.
 
 Use sample numbers during testing; sending actual tenant messages is unnecessary for workflow validation.
 
