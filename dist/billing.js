@@ -26,6 +26,8 @@ const Billing = (() => {
   function monthlyCharge(tenant, reference, fallbackMonthlyRate) {
     if (reference < tenant.start.slice(0, 7)) return 0;
     const saved = agreement(tenant, reference);
+    if (saved && index(reference) >= index(saved.start.slice(0, 7)) + Number(saved.months)) return 0;
+    if (tenant.endDate && reference > tenant.endDate.slice(0, 7)) return 0;
     const current = effectiveTenant(tenant, reference);
     const bill = cycle(current, reference);
     const total = saved?.total ?? tenant.termRate ?? fallbackMonthlyRate * bill.months;
@@ -36,7 +38,7 @@ const Billing = (() => {
     const payment = findPayment(payments, tenant.id, reference);
     const charge = payment ? monthlyAmount(payment, reference) : monthlyCharge(tenant, reference, fallbackMonthlyRate);
     const paid = payment?.status === 'paid' ? charge : 0;
-    return { charge, paid, balance: charge - paid, payment, active: true };
+    return { charge, paid, balance: charge - paid, payment, active: charge > 0 };
   }
   function date(period, day) {
     const [year, month] = period.split('-').map(Number);
@@ -52,11 +54,11 @@ const Billing = (() => {
     return { period, months, due: date(period, day), next: date(shift(period, months), day) };
   }
   function findPayment(payments, tenantId, period) {
-    return payments.find(payment => payment.tenant === tenantId && includes(payment, period));
+    return payments.find(payment => payment.tenant === tenantId && payment.status !== 'rejected' && includes(payment, period));
   }
   function overlaps(payments, candidate) {
     const periods = covered(candidate);
-    return payments.some(payment => payment.id !== candidate.id && payment.tenant === candidate.tenant && covered(payment).some(period => periods.includes(period)));
+    return payments.some(payment => payment.status !== 'rejected' && payment.id !== candidate.id && payment.tenant === candidate.tenant && covered(payment).some(period => periods.includes(period)));
   }
   return { termOptions, count, term, index, shift, covered, includes, split, monthlyAmount, monthlyCharge, ledger, agreement, date, cycle, findPayment, overlaps };
 })();

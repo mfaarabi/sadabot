@@ -102,4 +102,21 @@ test('explicit payment allocations preserve different monthly contract charges',
   assert.equal(Billing.monthlyAmount(payment, '2026-10'), 1000000);
   assert.equal(Billing.monthlyAmount(payment, '2026-11'), 1500000);
 });
+test('rejected transfers release coverage so a replacement can be recorded', () => {
+  const rejected = { id: 'p1', tenant: 't1', period: '2026-10', months: 6, amount: 6000000, status: 'rejected' };
+  assert.equal(Billing.findPayment([rejected], 't1', '2026-12'), undefined);
+  assert.equal(Billing.overlaps([rejected], { ...rejected, id: 'p2', status: 'review' }), false);
+  assert.equal(Billing.overlaps([{ ...rejected, status: 'deferred' }], { ...rejected, id: 'p2' }), true);
+});
+
+test('saved terms end without phantom recurring charges and departure caps later months', () => {
+  const t = { id: 't', start: '2026-01-01', term: 3, day: 1, termRate: 3000, agreements: [{ start: '2026-01-01', months: 3, total: 3000, day: 1 }] };
+  assert.equal(Billing.monthlyCharge(t, '2026-03', 1000), 1000);
+  assert.equal(Billing.monthlyCharge(t, '2026-04', 1000), 0);
+  assert.equal(Billing.ledger(t, [], '2026-04', 1000).active, false);
+  t.endDate = '2026-02-15';
+  assert.equal(Billing.monthlyCharge(t, '2026-02', 1000), 1000);
+  assert.equal(Billing.monthlyCharge(t, '2026-03', 1000), 0);
+});
+
 console.log(`${tests.length} billing checks passed:\n` + tests.map(name => `- ${name}`).join('\n'));
