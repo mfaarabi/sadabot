@@ -252,16 +252,16 @@
 <h2>10. Current prototype versus operational requirements</h2>
 <p>The current implementation is a feedback tool, not a completed operational MVP.</p>
 <div class="table-scroll"><table><thead><tr><th>Capability</th><th>Current prototype</th><th>Still needed for operational use</th></tr></thead><tbody>
-<tr><td>Rooms and tenants</td><td>Create and edit; current room assignment</td><td>Tenancy lifecycle and retained assignment history</td></tr>
-<tr><td>Rent periods</td><td>Monthly and 12-month ledgers; total term pricing spread into monthly charges; renewal deadlines and effective-dated price changes</td><td>Durable obligations and cross-month arrears</td></tr>
-<tr><td>Reminder preparation</td><td>Multiple editable templates, including renewal questions; copy; WhatsApp handoff; saved sent text</td><td>Agreed timing and complete delivery history</td></tr>
+<tr><td>Rooms and tenants</td><td>Create/edit, renewal answers, explicit successor agreements, confirmed departure and room release</td><td>Retained room assignment history and exception handling</td></tr>
+<tr><td>Rent periods</td><td>Monthly/12-month ledgers, total term pricing, effective-dated agreements, unresolved cross-period collection; explicit term creation</td><td>Shared durable records and exception handling</td></tr>
+<tr><td>Reminder preparation</td><td>Separate collection/renewal queues; editable templates; WhatsApp handoff; manual sent history; optional follow-up dates</td><td>Validate three-day collection and 30-day renewal windows; complete delivery history</td></tr>
 <tr><td>Reminder automation</td><td>On-screen queue only</td><td>Background scheduler and manager notifications; optional direct tenant delivery</td></tr>
-<tr><td>Payments</td><td>Multi-month entry with equal monthly allocation; review, confirmation, undo; overlap prevention</td><td>Durable storage, audit trail, and agreed exception handling</td></tr>
+<tr><td>Payments</td><td>Shared multi-month entry; review/defer/reject, confirmation, undo/correction history; overlap prevention</td><td>Durable storage, manager attribution, refunds and agreed exception handling</td></tr>
 <tr><td>Receipts</td><td>Browser-local image attachment, up to 1 MB per file</td><td>Protected shared storage and recovery</td></tr>
 <tr><td>Data</td><td>Browser localStorage; JSON export</td><td>Shared database, backup, and tested recovery</td></tr>
 <tr><td>Access</td><td>Private hosted site</td><td>Confirm family access and application-level authorization needs</td></tr>
 </tbody></table></div>
-<p>Prototype limitations include no move-out flow,  no arrears carryover, no partial-month or discounted-payment allocation, no automatic receipt reading, and no notification delivery while the site is closed. Local browser storage is not the intended long-term storage design.</p>
+<p>The workflow changes are local only; the published prototype remains at its previous version. Limitations include no prorated exit-month charges, refunds, partial payments or discounted-payment allocation, no automatic receipt reading, and no notification delivery while the site is closed. Planned departure stops later charges when departure is confirmed; unresolved old rent remains in collection. Local browser storage is not the intended long-term storage design.</p>
 <h2>11. Decisions to validate with the manager</h2>
 <div class="table-scroll"><table><thead><tr><th>Question</th><th>Why it matters</th></tr></thead><tbody>
 <tr><td>How many rooms, properties, and managers are involved?</td><td>Sets scope and access needs.</td></tr>

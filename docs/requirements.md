@@ -299,16 +299,16 @@ The current implementation is a feedback tool, not a completed operational MVP.
 
 | Capability | Current prototype | Still needed for operational use |
 | --- | --- | --- |
-| Rooms and tenants | Create and edit; current room assignment | Tenancy lifecycle and retained assignment history |
-| Rent periods | Monthly and 12-month ledgers; total term pricing spread into monthly charges; renewal deadlines and effective-dated price changes | Durable obligations and cross-month arrears |
-| Reminder preparation | Multiple editable templates, including renewal questions; copy; WhatsApp handoff; saved sent text | Agreed timing and complete delivery history |
+| Rooms and tenants | Create/edit, renewal answers, explicit successor agreements, confirmed departure and room release | Retained room assignment history and exception handling |
+| Rent periods | Monthly/12-month ledgers, total term pricing, effective-dated agreements, unresolved cross-period collection; explicit term creation | Shared durable records and exception handling |
+| Reminder preparation | Separate collection/renewal queues; editable templates; WhatsApp handoff; manual sent history; optional follow-up dates | Validate three-day collection and 30-day renewal windows; complete delivery history |
 | Reminder automation | On-screen queue only | Background scheduler and manager notifications; optional direct tenant delivery |
-| Payments | Multi-month entry with equal monthly allocation; review, confirmation, undo; overlap prevention | Durable storage, audit trail, and agreed exception handling |
+| Payments | Shared multi-month entry; review/defer/reject, confirmation, undo/correction history; overlap prevention | Durable storage, manager attribution, refunds and agreed exception handling |
 | Receipts | Browser-local image attachment, up to 1 MB per file | Protected shared storage and recovery |
 | Data | Browser localStorage; JSON export | Shared database, backup, and tested recovery |
 | Access | Private hosted site | Confirm family access and application-level authorization needs |
 
-Prototype limitations include no move-out flow,  no arrears carryover, no partial-month or discounted-payment allocation, no automatic receipt reading, and no notification delivery while the site is closed. Local browser storage is not the intended long-term storage design.
+The workflow changes are local only; the published prototype remains at its previous version. Limitations include no prorated exit-month charges, refunds, partial payments or discounted-payment allocation, no automatic receipt reading, and no notification delivery while the site is closed. Planned departure stops later charges when departure is confirmed; unresolved old rent remains in collection. Local browser storage is not the intended long-term storage design.
 
 ## 11. Decisions to validate with the manager
 

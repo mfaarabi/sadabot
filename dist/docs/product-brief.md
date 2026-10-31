@@ -27,7 +27,7 @@ The website should work comfortably on the manager's phone, with clear wording a
 
 ## What we have today
 
-The interactive prototype lets us try room and tenant management, multiple WhatsApp templates, term-based deadlines, receipt attachment, and manual payment confirmation using sample data. A total term price is spread across its months: Rp6,000,000 over six months means Rp1,000,000 charged per month. The ledger shows the charge, paid share, and balance for each month; the full transfer stays in its details.
+The local interactive prototype has separate collection, verification, and renewal queues, with one shared payment-entry form. It supports follow-up dates, deferred/rejected review, verification undo, renewal answers, and confirmed departure while retaining unpaid obligations. New terms require an explicit saved agreement. It also provides room and tenant management, multiple WhatsApp templates, receipt attachment, and manual payment confirmation using sample data. A total term price is spread across its months: Rp6,000,000 over six months means Rp1,000,000 charged per month. The ledger shows the charge, paid share, and balance for each month; the full transfer stays in its details.
 
 It currently saves changes only in the browser. It does **not** yet send background notifications, automatically message tenants, or share records between devices. The next milestone is reliable reminders and shared records, refined through the manager's feedback.
 
