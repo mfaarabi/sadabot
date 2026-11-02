@@ -9,7 +9,7 @@ This repository is ready to import as a Cloudflare Worker with static assets. Th
 
    | Setting | Value |
    | --- | --- |
-   | Worker name | `sadabot` |
+   | Worker name | `kost-rapi` |
    | Production branch | `master` |
    | Root directory | `/` |
    | Build command | `npm run build` |
