@@ -1,0 +1,18 @@
+{
+  "name": "sadabot",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "check": "node --check dist/app.js && node --check dist/billing.js && node --check dist/workflows.js && node --check dist/workflow-ui.js && node scripts/test-billing.cjs && node scripts/test-workflows.cjs && node scripts/test-worker.cjs",
+    "build": "npm run check",
+    "preview": "wrangler dev --config wrangler.jsonc --ip 127.0.0.1 --port 4174",
+    "deploy": "wrangler deploy --config wrangler.jsonc",
+    "deploy:dry-run": "wrangler deploy --config wrangler.jsonc --dry-run --outdir .wrangler/dry-run"
+  },
+  "devDependencies": {
+    "wrangler": "4.156.1"
+  }
+}
