@@ -90,9 +90,7 @@ export default {
       });
     } else {
       // Keep asset failures visible to the platform; only authorization parsing is contained.
-      const assetUrl = new URL(request.url);
-      if (assetUrl.pathname === '/') assetUrl.pathname = '/index.html';
-      response = await env.ASSETS.fetch(new Request(assetUrl, request));
+      response = await env.ASSETS.fetch(request);
     }
     return addSecurityHeaders(response);
   },

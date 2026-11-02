@@ -59,7 +59,7 @@ async function main() {
   for (const method of ['GET', 'HEAD']) {
     const response = await worker.fetch(request('/?from=home', method, auth()), configured);
     assert.equal(response.status, 200);
-    assert.equal(calls.at(-1).url, 'https://demo.example/index.html?from=home');
+    assert.equal(calls.at(-1).url, 'https://demo.example/?from=home');
     assert.equal(calls.at(-1).method, method);
     secure(response);
   }
@@ -92,6 +92,7 @@ async function main() {
   if (fs.existsSync(configPath)) {
     const config = fs.readFileSync(configPath, 'utf8');
     assert.match(config, /"run_worker_first"\s*:\s*true/, 'wrangler assets.run_worker_first must be true');
+    assert.match(config, /"html_handling"\s*:\s*"drop-trailing-slash"/, 'Cloudflare must serve clean HTML URLs');
   }
 
   console.log('worker tests passed');
