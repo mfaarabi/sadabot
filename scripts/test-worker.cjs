@@ -56,6 +56,14 @@ async function main() {
     secure(response);
   }
 
+  for (const method of ['GET', 'HEAD']) {
+    const response = await worker.fetch(request('/?from=home', method, auth()), configured);
+    assert.equal(response.status, 200);
+    assert.equal(calls.at(-1).url, 'https://demo.example/index.html?from=home');
+    assert.equal(calls.at(-1).method, method);
+    secure(response);
+  }
+
   const utf8Env = { ...configured, DEMO_USERNAME: 'usér', DEMO_PASSWORD: 'pāss:word' };
   let response = await worker.fetch(request('/direct.css', 'GET', auth('usér', 'pāss:word')), utf8Env);
   assert.equal(response.status, 200);
